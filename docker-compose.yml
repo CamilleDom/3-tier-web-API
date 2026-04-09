@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+    database:
+        build: ./Database
+        container_name: td1-database
+        restart: unless-stopped
+        networks:
+            - app-network
+        env_file: .env
+        volumes:
+            - db_data:/var/lib/postgresql/data
+
+    backend:
+        build: ./Backend_API/simpleapi
+        container_name: td1-backend
+        restart: unless-stopped
+        networks:
+            - app-network
+        ports:
+            - "8080:8080"
+        env_file: .env
+        depends_on:
+            - database
+
+    httpd:
+        build: ./HTTP_server
+        container_name: td1-httpd
+        restart: unless-stopped
+        networks:
+            - app-network
+        ports:
+            - "8070:80"
+        depends_on:
+            - backend
+
+networks:
+    app-network:
+        driver: bridge
+        ipam:
+            config:
+                - subnet: 172.25.0.0/16
+
+volumes:
+    db_data:
+        driver: local
