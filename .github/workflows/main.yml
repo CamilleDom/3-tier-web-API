@@ -37,30 +37,20 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ./Backend_API/simpleapi
-          push: true
+          push: ${{ github.ref == 'refs/heads/main' }}
           tags: ${{ secrets.DOCKER_USER }}/td1-backend:latest
 
       - name: Build and push database
         uses: docker/build-push-action@v6
         with:
           context: ./Database
-          push: true
+          push: ${{ github.ref == 'refs/heads/main' }}
           tags: ${{ secrets.DOCKER_USER }}/td1-database:latest
 
       - name: Build and push httpd
         uses: docker/build-push-action@v6
         with:
           context: ./HTTP_server
-          push: true
-          tags: ${{ secrets.DOCKER_USER }}/td1-httpd:latest
-
-      - name: Build image and push backend
-        uses: docker/build-push-action@v6
-        with:
-          # relative path to the place where source code with Dockerfile is located
-          context: 
-          # Note: tags has to be all lower-case
-          tags:  ${{secrets.DOCKER_USER }}/tp-devops-simple-api:latest
-          # build on feature branches, push only on main branch
           push: ${{ github.ref == 'refs/heads/main' }}
+          tags: ${{ secrets.DOCKER_USER }}/td1-httpd:latest
 
