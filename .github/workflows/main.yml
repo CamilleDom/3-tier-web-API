@@ -18,7 +18,10 @@ jobs:
           distribution: 'temurin'
 
       - name: Build and test with Maven
-        run: cd Backend_API/simpleapi && mvn -B verify sonar:sonar -Dsonar.projectKey=CamilleDom_3-tier-web-API -Dsonar.organization=camilledom -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=${{ secrets.SONAR_TOKEN }}  --file Backend_API/simpleapi/pom.xml
+        run: cd Backend_API/simpleapi && mvn clean verify --file pom.xml
+
+      - name: SonarCloud Analysis
+        run: cd Backend_API/simpleapi && mvn sonar:sonar -Dsonar.projectKey=CamilleDom_3-tier-web-API -Dsonar.organization=camilledom -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=${{ secrets.SONAR_TOKEN }} --file pom.xml
 
 
   build-and-push-docker-image:
