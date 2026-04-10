@@ -41,7 +41,6 @@ jobs:
         with:
           name: maven-test-reports
           path: Backend_API/simpleapi/target/surefire-reports/
-    timeout-minutes: 20
           retention-days: 30
 
       - name: Upload JAR artifact
@@ -254,8 +253,7 @@ jobs:
       - name: ❌ Erreur - Build httpd échoué
         if: failure()
         run: echo "Problème dans le step 'Build and push httpd'" && exit 1
-timeout-minutes: 15
-    
+
   test-httpd:
     runs-on: ubuntu-24.04
     steps:
