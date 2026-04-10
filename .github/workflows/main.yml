@@ -281,12 +281,28 @@ jobs:
       - name: Verify index.html is served correctly
         run: |
           echo "Testing HTTP response..."
-          curl -v http://localhost:8080/ 2>&1 | grep -i "200 OK" || exit 1
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/)
+          echo "HTTP Status: $HTTP_STATUS"
           
+          if [ "$HTTP_STATUS" != "200" ]; then
+            echo "❌ Expected HTTP 200, got $HTTP_STATUS"
+            exit 1
+          fi
+          
+          echo "✓ HTTP 200 OK received"
           echo "Verifying HTML content..."
-          RESPONSE=$(curl http://localhost:8080/)
-          echo "$RESPONSE" | grep -q "Welcome" || exit 1
-          echo "$RESPONSE" | grep -q "<!DOCTYPE html>" || exit 1
+          RESPONSE=$(curl -s http://localhost:8080/)
+          
+          if ! echo "$RESPONSE" | grep -q "Welcome"; then
+            echo "❌ 'Welcome' not found in HTML"
+            exit 1
+          fi
+          
+          if ! echo "$RESPONSE" | grep -q "<!DOCTYPE html>"; then
+            echo "❌ '<!DOCTYPE html>' not found in HTML"
+            exit 1
+          fi
+          
           echo "✓ HTML content is valid"
 
       - name: Check response headers
