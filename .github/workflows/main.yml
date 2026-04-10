@@ -265,7 +265,18 @@ jobs:
       - name: Run httpd container
         run: |
           docker run -d --name httpd-test -p 8080:80 test-httpd:latest
-          sleep 2
+          sleep 3
+
+      - name: Check if container is running
+        run: |
+          echo "Checking container status..."
+          docker ps | grep httpd-test || (echo "Container not running!" && docker ps -a)
+          
+          echo "Container logs:"
+          docker logs httpd-test || echo "No logs available"
+          
+          echo "Checking files in container:"
+          docker exec httpd-test ls -la /usr/local/apache2/htdocs/ || echo "Cannot access htdocs"
 
       - name: Wait for httpd to respond
         run: |
@@ -281,11 +292,17 @@ jobs:
       - name: Verify index.html is served correctly
         run: |
           echo "Testing HTTP response..."
+          HTTP_RESPONSE=$(curl -s -v http://localhost:8080/ 2>&1)
+          echo "Full response:"
+          echo "$HTTP_RESPONSE"
+          
           HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/)
           echo "HTTP Status: $HTTP_STATUS"
           
           if [ "$HTTP_STATUS" != "200" ]; then
             echo "❌ Expected HTTP 200, got $HTTP_STATUS"
+            echo "Container logs:"
+            docker logs httpd-test
             exit 1
           fi
           
@@ -295,6 +312,8 @@ jobs:
           
           if ! echo "$RESPONSE" | grep -q "Welcome"; then
             echo "❌ 'Welcome' not found in HTML"
+            echo "Response was:"
+            echo "$RESPONSE"
             exit 1
           fi
           
