@@ -255,7 +255,7 @@ jobs:
 
   build-database-image:
     timeout-minutes: 15
-    needs: test-database
+    needs: [test-database, sonar-quality-gate]
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -279,7 +279,7 @@ jobs:
 
   build-httpd-image:
     timeout-minutes: 15
-    needs: test-httpd
+    needs: [test-httpd, sonar-quality-gate]
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
