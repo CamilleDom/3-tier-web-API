@@ -259,12 +259,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build httpd image for testing
-        run: docker build -t test-httpd:latest ./HTTP_server
-
       - name: Run httpd container
         run: |
-          docker run -d --name httpd-test -p 8080:80 test-httpd:latest
+          docker run -d --name httpd-test \
+            -v ${{ github.workspace }}/HTTP_server/index.html:/usr/local/apache2/htdocs/index.html \
+            -v ${{ github.workspace }}/HTTP_server/httpd-test.conf:/usr/local/apache2/conf/httpd.conf \
+            -p 8080:80 \
+            httpd:2.4-alpine
           sleep 3
 
       - name: Check if container is running
