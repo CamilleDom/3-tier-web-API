@@ -32,9 +32,6 @@ jobs:
       - name: Build and test with Maven
         run: cd Backend_API/simpleapi && mvn clean verify --file pom.xml
 
-      - name: SonarCloud Analysis
-        run: cd Backend_API/simpleapi && mvn sonar:sonar -Dsonar.projectKey=CamilleDom_3-tier-web-API -Dsonar.organization=camilledom -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=${{ secrets.SONAR_TOKEN }} --file pom.xml
-
       - name: Upload test reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -54,6 +51,56 @@ jobs:
       - name: ❌ Erreur - Tests Maven échoués
         if: failure()
         run: echo "Problème dans le step 'Build and test with Maven' - Vérifiez les logs et artifacts"
+
+  sonar-quality-gate:
+    needs: test-backend
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Cache Maven dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('Backend_API/simpleapi/pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven-
+
+      - name: Run SonarCloud Analysis
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          cd Backend_API/simpleapi
+          mvn clean verify sonar:sonar \
+            -Dsonar.projectKey=CamilleDom_3-tier-web-API \
+            -Dsonar.organization=camilledom \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }} \
+            -Dsonar.qualitygate.wait=true \
+            --file pom.xml
+
+      - name: ✓ Quality Gate PASSED
+        if: success()
+        run: echo "SonarCloud Quality Gate réussi! Pas de nouvelles erreurs détectées."
+
+      - name: ❌ Quality Gate FAILED
+        if: failure()
+        run: |
+          echo "❌ SonarCloud Quality Gate échoué!"
+          echo "Possibilités:"
+          echo "  - Des bugs ont été ajoutés"
+          echo "  - La couverture de tests a baissé"
+          echo "  - Des vulnérabilités détectées"
+          echo "  - Code duplications excessives"
+          echo ""
+          echo "Consulte le rapport SonarCloud: https://sonarcloud.io/project/overview?id=CamilleDom_3-tier-web-API"
+          exit 1
 
   test-database:
     runs-on: ubuntu-24.04
@@ -183,7 +230,7 @@ jobs:
         run: echo "Problème dans les integration tests - Backend ne peut pas se connecter à la DB"
 
   build-backend-image:
-    needs: [test-backend, test-database, integration-tests]
+    needs: [test-backend, test-database, integration-tests, sonar-quality-gate]
     timeout-minutes: 15
     runs-on: ubuntu-24.04
     steps:
