@@ -4,42 +4,102 @@ services:
     database:
         build: ./Database
         container_name: td1-database
-        restart: unless-stopped
+        restart: on-failure
         networks:
-            - app-network
+            - db-network
         env_file: .env
         volumes:
             - db_data:/var/lib/postgresql/data
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+        deploy:
+            resources:
+                limits:
+                    cpus: '1'
+                    memory: 512M
+                reservations:
+                    cpus: '0.5'
+                    memory: 256M
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "10m"
+                max-file: "3"
 
     backend:
         build: ./Backend_API/simpleapi
         container_name: td1-backend
-        restart: unless-stopped
+        restart: on-failure
         networks:
-            - app-network
-        ports:
-            - "8080:8080"
+            - db-network
+            - api-network
         env_file: .env
         depends_on:
-            - database
+            database:
+                condition: service_healthy
+        healthcheck:
+            test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+            interval: 15s
+            timeout: 5s
+            retries: 3
+        deploy:
+            resources:
+                limits:
+                    cpus: '2'
+                    memory: 1G
+                reservations:
+                    cpus: '1'
+                    memory: 512M
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "10m"
+                max-file: "3"
 
     httpd:
         build: ./HTTP_server
         container_name: td1-httpd
-        restart: unless-stopped
+        restart: on-failure
         networks:
-            - app-network
+            - api-network
         ports:
             - "8070:80"
         depends_on:
-            - backend
+            backend:
+                condition: service_healthy
+        healthcheck:
+            test: ["CMD-SHELL", "curl -f http://localhost/ || exit 1"]
+            interval: 10s
+            timeout: 5s
+            retries: 3
+        deploy:
+            resources:
+                limits:
+                    cpus: '0.5'
+                    memory: 256M
+                reservations:
+                    cpus: '0.25'
+                    memory: 128M
+        logging:
+            driver: "json-file"
+            options:
+                max-size: "10m"
+                max-file: "3"
 
 networks:
-    app-network:
+    db-network:
         driver: bridge
         ipam:
             config:
-                - subnet: 172.25.0.0/16
+                - subnet: 172.25.1.0/24
+    api-network:
+        driver: bridge
+        ipam:
+            config:
+                - subnet: 172.25.2.0/24
 
 volumes:
     db_data:
