@@ -3,7 +3,10 @@ on:
   push:
     branches: 
       - main
+      - develop
   pull_request:
+    branches:
+      - develop
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -230,11 +233,20 @@ jobs:
         run: echo "Problème dans les integration tests - Backend ne peut pas se connecter à la DB"
 
   build-backend-image:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     needs: [test-backend, test-database, integration-tests, sonar-quality-gate]
     timeout-minutes: 15
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+
+      - name: Generate image tags
+        id: tags
+        run: |
+          BRANCH=$(echo ${{ github.ref }} | sed 's|refs/heads/||')
+          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
+          echo "version_tag=$BRANCH-$SHORT_SHA" >> $GITHUB_OUTPUT
+          echo "Version: $BRANCH-$SHORT_SHA"
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -247,18 +259,29 @@ jobs:
         with:
           context: ./Backend_API/simpleapi
           push: ${{ github.ref == 'refs/heads/main' }}
-          tags: ${{ secrets.DOCKER_USER }}/td1-backend:latest
+          tags: |
+            ${{ secrets.DOCKER_USER }}/td1-backend:latest
+            ${{ secrets.DOCKER_USER }}/td1-backend:${{ steps.tags.outputs.version_tag }}
 
       - name: ❌ Erreur - Build backend échoué
         if: failure()
         run: echo "Problème dans le step 'Build and push backend API'" && exit 1
 
   build-database-image:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     timeout-minutes: 15
     needs: [test-database, sonar-quality-gate]
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+
+      - name: Generate image tags
+        id: tags
+        run: |
+          BRANCH=$(echo ${{ github.ref }} | sed 's|refs/heads/||')
+          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
+          echo "version_tag=$BRANCH-$SHORT_SHA" >> $GITHUB_OUTPUT
+          echo "Version: $BRANCH-$SHORT_SHA"
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -271,18 +294,29 @@ jobs:
         with:
           context: ./Database
           push: ${{ github.ref == 'refs/heads/main' }}
-          tags: ${{ secrets.DOCKER_USER }}/td1-database:latest
+          tags: |
+            ${{ secrets.DOCKER_USER }}/td1-database:latest
+            ${{ secrets.DOCKER_USER }}/td1-database:${{ steps.tags.outputs.version_tag }}
 
       - name: ❌ Erreur - Build database échoué
         if: failure()
         run: echo "Problème dans le step 'Build and push database'" && exit 1
 
   build-httpd-image:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     timeout-minutes: 15
     needs: [test-httpd, sonar-quality-gate]
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+
+      - name: Generate image tags
+        id: tags
+        run: |
+          BRANCH=$(echo ${{ github.ref }} | sed 's|refs/heads/||')
+          SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
+          echo "version_tag=$BRANCH-$SHORT_SHA" >> $GITHUB_OUTPUT
+          echo "Version: $BRANCH-$SHORT_SHA"
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -295,7 +329,9 @@ jobs:
         with:
           context: ./HTTP_server
           push: ${{ github.ref == 'refs/heads/main' }}
-          tags: ${{ secrets.DOCKER_USER }}/td1-httpd:latest
+          tags: |
+            ${{ secrets.DOCKER_USER }}/td1-httpd:latest
+            ${{ secrets.DOCKER_USER }}/td1-httpd:${{ steps.tags.outputs.version_tag }}
 
       - name: ❌ Erreur - Build httpd échoué
         if: failure()
