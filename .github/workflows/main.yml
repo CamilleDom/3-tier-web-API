@@ -435,17 +435,43 @@ jobs:
       - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh
+          
+          # Debug: Check if secret is set
+          echo "Checking secret length..."
+          SECRET_LEN=${#DEPLOY_SSH_KEY}
+          echo "Secret length: $SECRET_LEN"
+          
+          if [ $SECRET_LEN -lt 50 ]; then
+            echo "❌ ERROR: Secret is too short! Did you update the GitHub secret?"
+            exit 1
+          fi
+          
+          # Decode base64 secret
           echo "${{ secrets.DEPLOY_SSH_KEY }}" | base64 -d > ~/.ssh/deploy_key
+          
+          # Verify decode was successful
+          if [ ! -s ~/.ssh/deploy_key ]; then
+            echo "❌ ERROR: Failed to decode SSH key!"
+            exit 1
+          fi
+          
+          # Check key format
+          KEY_BEGIN=$(head -1 ~/.ssh/deploy_key)
+          if [ "$KEY_BEGIN" != "-----BEGIN PRIVATE KEY-----" ]; then
+            echo "❌ ERROR: Decoded key has wrong format!"
+            echo "First line: $KEY_BEGIN"
+            exit 1
+          fi
+          
           chmod 600 ~/.ssh/deploy_key
           
-          # Verify key format
-          head -1 ~/.ssh/deploy_key
-          wc -l ~/.ssh/deploy_key
+          echo "✓ SSH key decoded successfully"
+          echo "Key lines: $(wc -l < ~/.ssh/deploy_key)"
           
           # Add host to known_hosts
           ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
           
-          echo "✓ SSH key setup complete"
+          echo "✓ Host key added to known_hosts"
           ls -la ~/.ssh/
       
       - name: Create .env file from secrets
@@ -480,6 +506,15 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y ansible
+      
+      - name: Test SSH connection
+        run: |
+          echo "🔐 Testing SSH connection..."
+          ssh -v -i ~/.ssh/deploy_key \
+            -o StrictHostKeyChecking=no \
+            -o ConnectTimeout=5 \
+            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} \
+            "echo 'SSH Connection Test Successful' && uname -a"
       
       - name: Create Ansible inventory
         run: |
