@@ -435,11 +435,20 @@ jobs:
       - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.DEPLOY_SSH_KEY }}" > /home/runner/.ssh/deploy_key
-          chmod 600 /home/runner/.ssh/deploy_key
-          ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} >> /home/runner/.ssh/known_hosts 2>/dev/null || true
-          echo "SSH key created successfully"
-          ls -la /home/runner/.ssh/
+          cat > ~/.ssh/deploy_key << EOFKEY
+          ${{ secrets.DEPLOY_SSH_KEY }}
+          EOFKEY
+          chmod 600 ~/.ssh/deploy_key
+          
+          # Verify key format
+          head -1 ~/.ssh/deploy_key
+          wc -l ~/.ssh/deploy_key
+          
+          # Add host to known_hosts
+          ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
+          
+          echo "✓ SSH key setup complete"
+          ls -la ~/.ssh/
       
       - name: Create .env file from secrets
         run: |
@@ -481,21 +490,24 @@ jobs:
           all:
             vars:
               ansible_user: ${{ secrets.DEPLOY_USER }}
-              ansible_ssh_private_key_file: /home/runner/.ssh/deploy_key
+              ansible_ssh_private_key_file: ~/.ssh/deploy_key
+              ansible_ssh_common_args: '-o StrictHostKeyChecking=no'
             children:
               prod:
                 hosts:
                   ${{ secrets.DEPLOY_HOST }}:
+                    ansible_host: ${{ secrets.DEPLOY_HOST }}
           EOF
           cat ansible/inventories/setup.yml
       
       - name: Run Ansible playbook
         run: |
           cd ansible
+          echo "🚀 Starting deployment..."
           ansible-playbook \
-            -v
-            -e "ansible_ssh_private_key_file=~/.ssh/deploy_key" \
-            deploy.yml
+            -i inventories/setup.yml \
+            -vvv \
+            deploy.yml 2>&1
       
       - name: ✅ Deployment successful
         if: success()
