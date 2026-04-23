@@ -450,6 +450,9 @@ jobs:
           DB_USER=${{ secrets.DB_USER || 'admin' }}
           DB_PASSWORD=${{ secrets.DB_PASSWORD }}
           DB_NAME=${{ secrets.DB_NAME || 'myapp' }}
+          POSTGRES_USER=${{ secrets.DB_USER || 'admin' }}
+          POSTGRES_PASSWORD=${{ secrets.DB_PASSWORD }}
+          POSTGRES_DB=${{ secrets.DB_NAME || 'myapp' }}
           
           # Backend API Configuration
           APP_CONTAINER_NAME=${{ secrets.APP_CONTAINER_NAME || 'td1-backend' }}
