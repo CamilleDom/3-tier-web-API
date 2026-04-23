@@ -1,18 +1,27 @@
 ---
 # tasks file for launch_proxy role
 
+- name: Wait for backend to be healthy before launching proxy
+  shell: |
+    docker inspect --format='{{"{{"}} .State.Health.Status {{"}}"}}' {{ app_container_name }}
+  register: health_status
+  until: health_status.stdout == "healthy"
+  retries: 12
+  delay: 10
+  
 - name: Launch HTTP Server (Reverse Proxy) container
   docker_container:
     name: "{{ proxy_container_name }}"
     image: "{{ proxy_image }}"
     state: started
+    recreate: true
     restart_policy: always
     networks:
       - name: "{{ proxy_network }}"
     ports:
       - "{{ proxy_port }}:80"
     healthcheck:
-      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost/ || exit 1"]
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/ || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
