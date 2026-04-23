@@ -5,12 +5,14 @@
 app_container_name: td1-backend
 app_image: cdmrg/td1-backend
 app_port: 8080
+app_network: api-network
+db_network: db-network
 db_user: admin
 db_password: admin123
 db_name: myapp
 
 app_env:
-  DB_HOST: database
+  DB_HOST: td1-database
   POSTGRES_USER: "{{ db_user }}"
   POSTGRES_PASSWORD: "{{ db_password }}"
   POSTGRES_DB: "{{ db_name }}"

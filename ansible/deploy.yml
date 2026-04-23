@@ -29,6 +29,7 @@
         app_container_name: "{{ env_vars.APP_CONTAINER_NAME }}"
         app_image: "{{ env_vars.APP_IMAGE }}"
         app_port: "{{ env_vars.APP_PORT | int }}"
+        app_network: "{{ env_vars.APP_NETWORK }}"
         proxy_container_name: "{{ env_vars.PROXY_CONTAINER_NAME }}"
         proxy_image: "{{ env_vars.PROXY_IMAGE }}"
         proxy_port: "{{ env_vars.PROXY_PORT | int }}"
