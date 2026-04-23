@@ -1,0 +1,24 @@
+---
+# tasks file for launch_app role
+
+- name: Launch Backend API container
+  docker_container:
+    name: "{{ app_container_name }}"
+    image: "{{ app_image }}"
+    state: started
+    restart_policy: always
+    networks:
+      - name: db-network
+      - name: api-network
+    ports:
+      - "{{ app_port }}:{{ app_port }}"
+    env: "{{ app_env }}"
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:{{ app_port }}/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+- name: Wait for application to be ready
+  pause:
+    seconds: 15

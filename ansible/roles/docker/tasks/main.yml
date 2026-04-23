@@ -1,0 +1,60 @@
+---
+# tasks file for ansible/roles/docker
+
+# Install prerequisites for Docker
+- name: Install required packages
+  apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gnupg
+      - lsb-release
+      - python3
+      - python3-pip
+    state: latest
+    update_cache: yes
+
+# Add Docker's official GPG key
+- name: Add Docker GPG key
+  apt_key:
+    url: https://download.docker.com/linux/debian/gpg
+    state: present
+
+# Set up the Docker stable repository
+- name: Add Docker APT repository
+  apt_repository:
+    repo: "deb [arch=amd64] https://download.docker.com/linux/debian {{ ansible_facts['distribution_release'] }} stable"
+    state: present
+
+# Install Docker
+- name: Install Docker
+  apt:
+    name: docker-ce
+    state: present
+
+# Install Docker SDK for Python
+- name: Install Docker SDK for Python
+  pip:
+    name: docker
+    state: present
+    executable: pip3
+    extra_args: --break-system-packages
+
+# Ensure Docker is running
+- name: Make sure Docker is running
+  service:
+    name: docker
+    state: started
+  tags: docker
+
+# Add ansible user to docker group
+- name: Add user to docker group
+  user:
+    name: admin
+    groups: docker
+    append: yes
+
+# Reset ssh connection to apply docker group membership
+- name: Reset ssh connection to apply docker group
+  meta: reset_connection

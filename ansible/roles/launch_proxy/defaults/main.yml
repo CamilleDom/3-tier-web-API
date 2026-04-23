@@ -1,0 +1,8 @@
+---
+# HTTP Server variables - loaded from .env in deploy.yml pre_tasks
+# These are fallback defaults if .env is not available
+
+proxy_container_name: td1-httpd
+proxy_image: cdmrg/td1-httpd
+proxy_port: 8070
+proxy_network: api-network

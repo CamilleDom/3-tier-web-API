@@ -1,0 +1,29 @@
+---
+# tasks file for launch_database role
+
+- name: Create database volume
+  docker_volume:
+    name: db_data
+    state: present
+
+- name: Launch PostgreSQL database container
+  docker_container:
+    name: "{{ db_container_name }}"
+    image: "{{ db_image }}"
+    state: started
+    restart_policy: always
+    networks:
+      - name: "{{ db_network }}"
+    ports:
+      - "{{ db_port }}:{{ db_port }}"
+    env: "{{ db_env }}"
+    volumes: "{{ db_volumes }}"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U {{ db_user }}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+- name: Wait for database to be ready
+  pause:
+    seconds: 10

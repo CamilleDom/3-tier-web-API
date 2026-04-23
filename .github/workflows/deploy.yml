@@ -1,0 +1,103 @@
+name: Deploy Application with Ansible
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: false
+        default: 'production'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
+      
+      - name: Create .env file from secrets
+        run: |
+          cat > .env << 'EOF'
+          # Database Configuration
+          DB_CONTAINER_NAME=${{ secrets.DB_CONTAINER_NAME || 'td1-database' }}
+          DB_IMAGE=${{ secrets.DB_IMAGE || 'cdmrg/td1-database' }}
+          DB_PORT=${{ secrets.DB_PORT || '5432' }}
+          DB_NETWORK=${{ secrets.DB_NETWORK || 'db-network' }}
+          DB_USER=${{ secrets.DB_USER || 'admin' }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          DB_NAME=${{ secrets.DB_NAME || 'myapp' }}
+          
+          # Backend API Configuration
+          APP_CONTAINER_NAME=${{ secrets.APP_CONTAINER_NAME || 'td1-backend' }}
+          APP_IMAGE=${{ secrets.APP_IMAGE || 'cdmrg/td1-backend' }}
+          APP_PORT=${{ secrets.APP_PORT || '8080' }}
+          
+          # HTTP Server (Reverse Proxy) Configuration
+          PROXY_CONTAINER_NAME=${{ secrets.PROXY_CONTAINER_NAME || 'td1-httpd' }}
+          PROXY_IMAGE=${{ secrets.PROXY_IMAGE || 'cdmrg/td1-httpd' }}
+          PROXY_PORT=${{ secrets.PROXY_PORT || '8070' }}
+          PROXY_NETWORK=${{ secrets.PROXY_NETWORK || 'api-network' }}
+          EOF
+          cat .env
+      
+      - name: Install Ansible
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ansible
+      
+      - name: Create Ansible inventory
+        run: |
+          mkdir -p ansible/inventories
+          cat > ansible/inventories/setup.yml << 'EOF'
+          all:
+            vars:
+              ansible_user: ${{ secrets.DEPLOY_USER }}
+              ansible_ssh_private_key_file: ~/.ssh/deploy_key
+            children:
+              prod:
+                hosts:
+                  ${{ secrets.DEPLOY_HOST }}:
+          EOF
+      
+      - name: Run Ansible playbook
+        run: |
+          cd ansible
+          ansible-playbook \
+            -i inventories/setup.yml \
+            -e "ansible_ssh_private_key_file=~/.ssh/deploy_key" \
+            deploy.yml
+      
+      - name: Verify deployment
+        run: |
+          echo "Deployment completed successfully!"
+          echo "Access your application at:"
+          echo "  Database: ${{ secrets.DEPLOY_HOST }}:5432"
+          echo "  Backend API: ${{ secrets.DEPLOY_HOST }}:8080"
+          echo "  HTTP Server: ${{ secrets.DEPLOY_HOST }}:8070"
+
+  notify:
+    needs: deploy
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+      - name: Send deployment status
+        run: |
+          if [ "${{ needs.deploy.result }}" == "success" ]; then
+            echo "✅ Deployment successful!"
+          else
+            echo "❌ Deployment failed!"
+            exit 1
+          fi
