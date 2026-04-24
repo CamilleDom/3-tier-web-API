@@ -18,7 +18,7 @@
 - name: Launch HTTP Server (Reverse Proxy) container
   docker_container:
     name: td1-httpd
-    image: cdmrg/td1-httpd
+    image: "{{ docker_user }}/td1-httpd"
     state: started
     pull: true
     recreate: true

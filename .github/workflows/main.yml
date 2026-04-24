@@ -530,7 +530,13 @@ jobs:
       - name: Run Ansible playbook
         run: |
           cd ansible
-          ansible-playbook -v -e "ansible_ssh_private_key_file=/home/runner/.ssh/deploy_key" deploy.yml
+          ansible-playbook -v deploy.yml \
+            -e "ansible_ssh_private_key_file=/home/runner/.ssh/deploy_key" \
+            -e "docker_user=${{ secrets.DOCKER_USER }}" \
+            -e "db_user=${{ secrets.DB_USER }}" \
+            -e "db_password=${{ secrets.DB_PASSWORD }}" \
+            -e "db_name=${{ secrets.DB_NAME }}" \
+            -e "deploy_host=${{ secrets.DEPLOY_HOST }}"
       
       - name: ✅ Deployment successful
         if: success()

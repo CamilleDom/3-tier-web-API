@@ -9,7 +9,7 @@
 - name: Launch PostgreSQL database container
   docker_container:
     name: td1-database
-    image: cdmrg/td1-database
+    image: "{{ docker_user }}/td1-database"
     state: started
     pull: true        # force le pull depuis le registry
     recreate: true
@@ -21,11 +21,11 @@
     volumes: db_data:/var/lib/postgresql/data
     env:
       POSTGRES_HOST: td1-database
-      POSTGRES_USER: usr
-      POSTGRES_PASSWORD: pwd
-      POSTGRES_DB: db
+      POSTGRES_USER: "{{ db_user }}"
+      POSTGRES_PASSWORD: "{{ db_password }}"
+      POSTGRES_DB: "{{ db_name }}"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U usr"]
+      test: ["CMD-SHELL", "pg_isready -U {{db_user}}"]
       interval: 10s
       timeout: 5s
       retries: 5

@@ -4,7 +4,7 @@
 - name: Launch Backend API container
   docker_container:
     name: td1-backend
-    image: cdmrg/td1-backend
+    image: "{{ docker_user }}/td1-backend"
     state: started
     pull: true        # force le pull depuis le registry
     recreate: true 
@@ -19,9 +19,9 @@
       - "8080:8080"
     env:
       POSTGRES_HOST: td1-database
-      POSTGRES_USER: usr
-      POSTGRES_PASSWORD: pwd
-      POSTGRES_DB: db
+      POSTGRES_USER: "{{ db_user }}"
+      POSTGRES_PASSWORD: "{{ db_password }}"
+      POSTGRES_DB: "{{ db_name }}"
     healthcheck:
       test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:8080/actuator/health || exit 1"]
       interval: 10s
