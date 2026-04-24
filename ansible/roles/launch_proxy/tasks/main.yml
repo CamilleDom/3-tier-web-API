@@ -14,7 +14,9 @@
     name: td1-httpd
     image: cdmrg/td1-httpd
     state: started
+    pull: true        # force le pull depuis le registry
+    recreate: true 
     networks:
       - name: api-network
     ports:
-      - "8070:80"
+      - "80:80"

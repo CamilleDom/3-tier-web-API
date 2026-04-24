@@ -11,6 +11,8 @@
     name: td1-database
     image: cdmrg/td1-database
     state: started
+    pull: true        # force le pull depuis le registry
+    recreate: true
     restart_policy: always
     networks:
       - name: db-network

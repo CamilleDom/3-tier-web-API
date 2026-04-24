@@ -6,10 +6,15 @@
     name: td1-backend
     image: cdmrg/td1-backend
     state: started
+    pull: true        # force le pull depuis le registry
+    recreate: true 
+
     restart_policy: always
     networks:
       - name: db-network
       - name: api-network
+        aliases:
+          - td1-backend
     ports:
       - "8080:8080"
     env:
