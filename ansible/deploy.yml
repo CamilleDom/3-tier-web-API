@@ -3,38 +3,6 @@
   become: true
   gather_facts: true
 
-  pre_tasks:
-    - name: Load environment variables from local .env file
-      set_fact:
-        env_content: "{{ lookup('file', '../.env') }}"
-      delegate_to: localhost
-      run_once: true
-
-    - name: Parse .env file into variables
-      set_fact:
-        env_vars: "{{ env_vars | default({}) | combine({(item.split('=')[0] | trim): (item.split('=')[1] | trim)}) }}"
-      loop: "{{ env_content.split('\n') }}"
-      when: item | trim != '' and not item.startswith('#') and '=' in item
-      run_once: true
-
-    - name: Set variables from .env
-      set_fact:
-        db_container_name: "{{ env_vars.DB_CONTAINER_NAME }}"
-        db_image: "{{ env_vars.DB_IMAGE }}"
-        db_port: "{{ env_vars.DB_PORT | int }}"
-        db_network: "{{ env_vars.DB_NETWORK }}"
-        db_user: "{{ env_vars.DB_USER }}"
-        db_password: "{{ env_vars.DB_PASSWORD }}"
-        db_name: "{{ env_vars.DB_NAME }}"
-        app_container_name: "{{ env_vars.APP_CONTAINER_NAME }}"
-        app_image: "{{ env_vars.APP_IMAGE }}"
-        app_port: "{{ env_vars.APP_PORT | int }}"
-        app_network: "{{ env_vars.APP_NETWORK }}"
-        proxy_container_name: "{{ env_vars.PROXY_CONTAINER_NAME }}"
-        proxy_image: "{{ env_vars.PROXY_IMAGE }}"
-        proxy_port: "{{ env_vars.PROXY_PORT | int }}"
-        proxy_network: "{{ env_vars.PROXY_NETWORK }}"
-
   roles:
     - docker
     - create_network
@@ -49,7 +17,7 @@
           ========================================
           Deployment Complete!
           ========================================
-          Database: http://{{ inventory_hostname }}:{{ db_port }}
-          Backend API: http://{{ inventory_hostname }}:{{ app_port }}
-          HTTP Server: http://{{ inventory_hostname }}:{{ proxy_port }}
+          Database: http://camille.dommergue.takima.school:5432
+          Backend API: http://camille.dommergue.takima.school:8080
+          HTTP Server: http://camille.dommergue.takima.school:8070
           ========================================

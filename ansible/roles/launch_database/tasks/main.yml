@@ -8,18 +8,22 @@
 
 - name: Launch PostgreSQL database container
   docker_container:
-    name: "{{ db_container_name }}"
-    image: "{{ db_image }}"
+    name: td1-database
+    image: cdmrg/td1-database
     state: started
     restart_policy: always
     networks:
-      - name: "{{ db_network }}"
+      - name: db-network
     ports:
-      - "{{ db_port }}:{{ db_port }}"
-    env: "{{ db_env }}"
-    volumes: "{{ db_volumes }}"
+      - "5432:5432"
+    volumes: db_data:/var/lib/postgresql/data
+    env:
+      POSTGRES_HOST: td1-database
+      POSTGRES_USER: usr
+      POSTGRES_PASSWORD: pwd
+      POSTGRES_DB: db
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U {{ db_user }}"]
+      test: ["CMD-SHELL", "pg_isready -U usr"]
       interval: 10s
       timeout: 5s
       retries: 5

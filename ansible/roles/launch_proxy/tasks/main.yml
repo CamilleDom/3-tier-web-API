@@ -3,7 +3,7 @@
 
 - name: Wait for backend to be healthy before launching proxy
   shell: |
-    docker inspect --format='{{"{{"}} .State.Health.Status {{"}}"}}' {{ app_container_name }}
+    docker inspect --format='{{"{{"}} .State.Health.Status {{"}}"}}' td1-backend
   register: health_status
   until: health_status.stdout == "healthy"
   retries: 12
@@ -11,10 +11,10 @@
 
 - name: Launch HTTP Server (Reverse Proxy) container
   docker_container:
-    name: "{{ proxy_container_name }}"
-    image: "{{ proxy_image }}"
+    name: td1-httpd
+    image: cdmrg/td1-httpd
     state: started
     networks:
-      - name: "{{ proxy_network }}"
+      - name: api-network
     ports:
-      - "{{ proxy_port }}:80"
+      - "8070:80"
