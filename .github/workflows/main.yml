@@ -454,7 +454,7 @@ jobs:
             context: ./Frontend
             push: true
             build-args: |
-              VUE_APP_API_URL=camille.dommergue.takima.school:8070/api
+              VUE_APP_API_URL=camille.dommergue.takima.school/api
             tags: |
               ${{ secrets.DOCKER_USER }}/td1-frontend:latest
               ${{ secrets.DOCKER_USER }}/td1-frontend:${{ steps.tags.outputs.version_tag }}
