@@ -422,7 +422,7 @@ jobs:
       - name: ❌ Erreur - Tests httpd échoués
         if: failure()
         run: echo "Problème dans les tests HTTPD - Vérifiez que le serveur démarre et répond"
-
+  
   build-frontend-image:
       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
       timeout-minutes: 15
@@ -430,6 +430,9 @@ jobs:
       runs-on: ubuntu-24.04
       steps:
         - uses: actions/checkout@v4   # <-- manquant
+        
+        - name: Debug - list files
+          run: ls -la && ls -la Frontend/ || echo "Frontend not found"
 
         - name: Generate image tags
           id: tags
