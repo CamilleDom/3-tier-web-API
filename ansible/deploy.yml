@@ -8,6 +8,7 @@
     - create_network
     - launch_database
     - launch_app
+    - launch_frontend
     - launch_proxy
 
   post_tasks:
@@ -17,7 +18,6 @@
           ========================================
           Deployment Complete!
           ========================================
-          Database: http://camille.dommergue.takima.school:5432
           Backend API: http://camille.dommergue.takima.school:8080
-          HTTP Server: http://camille.dommergue.takima.school:8070
+          HTTP Server: http://camille.dommergue.takima.school
           ========================================

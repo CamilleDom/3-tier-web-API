@@ -1,0 +1,22 @@
+---
+- name: Launch Frontend container
+  docker_container:
+    name: td1-frontend
+    image: cdmrg/td1-frontend
+    state: started
+    pull: true
+    recreate: true
+    restart_policy: always
+    networks:
+      - name: api-network
+        aliases:
+          - td1-frontend
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:80 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+- name: Wait for frontend to be ready
+  pause:
+    seconds: 5
