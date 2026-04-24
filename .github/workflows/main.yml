@@ -7,6 +7,7 @@ on:
   pull_request:
     branches:
       - develop
+  workflow_dispatch: # Permet de déclencher manuellement le déploiement
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -427,6 +428,7 @@ jobs:
     needs: [build-backend-image, build-database-image, build-httpd-image]
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    environment: production  # Demande une approbation manuelle avant le déploiement
     
     steps:
       - name: Checkout repository
